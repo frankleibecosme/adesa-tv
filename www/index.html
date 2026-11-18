@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ADESA TV 2.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#F3F6FA;--card:#FFFFFF;--ink:#13233A;--mute:#5B6B80;--line:#D5DDE8;--brand:#12263F;--brandink:#FFFFFF;--hot:#E8590C;--ok:#1E7F4F;--bad:#C92A2A;--warn:#B7791F;--court:#173A5E;--chalk:#DCE8F5;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0C1522;--card:#14233A;--ink:#E7EEF7;--mute:#9AAAC0;--line:#27395A;--brand:#091323;--hot:#FF8A4C;--ok:#4CC38A;--bad:#FF7B7B;--warn:#F2C14E;--court:#0E2A47;--chalk:#BFD3EA}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0C1522;--card:#14233A;--ink:#E7EEF7;--mute:#9AAAC0;--line:#27395A;--brand:#091323;--hot:#FF8A4C;--ok:#4CC38A;--bad:#FF7B7B;--warn:#F2C14E;--court:#0E2A47;--chalk:#BFD3EA}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+h1,h2,h3{font-family:"Barlow Condensed","Arial Narrow",sans-serif;margin:0;letter-spacing:.2px}
+h1{font-size:34px}h2{font-size:26px;margin-bottom:12px}h3{font-size:20px}
+header{background:var(--brand);color:var(--brandink);display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:10px 16px;position:sticky;top:0;z-index:5}
+.logo{font:700 26px "Barlow Condensed",sans-serif}.logo i{font-style:normal;color:var(--hot)}
+nav{display:flex;gap:4px;overflow-x:auto;flex:1}
+nav a{color:inherit;text-decoration:none;padding:6px 12px;border-radius:6px;white-space:nowrap;opacity:.8}
+nav a.on{background:rgba(255,255,255,.16);opacity:1}
+main{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+label{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:14px;color:var(--mute);flex:1;min-width:140px}
+input,select,textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%}
+button{font:600 15px Barlow,sans-serif;padding:9px 16px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.p{background:var(--hot);border-color:var(--hot);color:#fff}
+button.ok{background:var(--ok);border-color:var(--ok);color:#fff}button.no{color:var(--bad)}
+:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+.mute{color:var(--mute)}.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:13px;font-weight:600;border:1px solid currentColor}
+.t-pend{color:var(--warn)}.t-ok{color:var(--ok)}.t-no{color:var(--bad)}
+.code{font:700 44px "Barlow Condensed",sans-serif;letter-spacing:6px;color:var(--hot)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cam{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.cam .b{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+svg.f{display:block;width:100%;background:var(--court)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.bar span{display:block;height:100%;background:var(--ok)}
+.banner{background:var(--card);border:1px dashed var(--hot);border-radius:8px;padding:10px 14px;font-size:14px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:15px}
+.var{border:2px solid var(--hot)}
+.login{max-width:380px;margin:8vh auto 0}
+.scr{width:100%;accent-color:var(--hot)}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header><div class="logo">ADESA <i>TV</i></div><nav id="nav"></nav></header>
+<main id="app"></main>
+<script>
+const S={logged:false,match:null,cams:[],plays:[],t:0,spd:1,run:false,log:[],view:'login'};
+const POS=['Gol norte','Gol sul','Lateral esquerda','Lateral direita'];
+const NAMES=['Carlos','Bia','Marcos','Júlia'];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=q=>document.querySelector(q);
+const approved=()=>S.cams.filter(c=>c.st==='ok');
+function go(v){S.view=v;S.run=false;history.replaceState(null,'','#'+v);draw()}
+function nav(){
+  const n=$('#nav');
+  if(!S.logged){n.innerHTML=S.view==='camera'?'<a href="#login" data-v="login">Voltar ao login</a>':'<a href="#camera" data-v="camera">Entrar como câmera</a>';}
+  else n.innerHTML=[['partidas','Partidas'],['cameras','Sala de câmeras'],['lances','Editor de lances'],['var','VAR ADESA']].map(([v,t])=>`<a href="#${v}" data-v="${v}" class="${S.view===v?'on':''}">${t}</a>`).join('')+'<a href="#login" data-v="out">Sair</a>';
+  n.querySelectorAll('a').forEach(a=>a.onclick=e=>{e.preventDefault();const v=a.dataset.v;if(v==='out'){S.logged=false;go('login')}else go(v)});
+}
+function court(k,ball){
+  const tr=['','scale(-1,1) translate(-100,0)','scale(1,-1) translate(0,-60)','scale(-1,-1) translate(-100,-60)'][k%4];
+  return `<svg class="f" viewBox="0 0 100 60" role="img" aria-label="Ângulo simulado"><g transform="${tr}" stroke="var(--chalk)" fill="none" stroke-width=".5"><rect x="3" y="3" width="94" height="54"/><line x1="50" y1="3" x2="50" y2="57"/><circle cx="50" cy="30" r="8"/><rect x="3" y="20" width="9" height="20"/><rect x="88" y="20" width="9" height="20"/>${ball?'<circle class="ball" r="2.2" fill="var(--hot)" stroke="none"/>':''}</g></svg>`;
+}
+function ballAt(t){return [8+84*(t/10),30+16*Math.sin(t*1.4)]}
+function moveBalls(){const [x,y]=ballAt(S.t);document.querySelectorAll('.ball').forEach(b=>{b.setAttribute('cx',x);b.setAttribute('cy',y)});const s=$('#scr');if(s)s.value=S.t;const l=$('#tl');if(l)l.textContent=S.t.toFixed(1)+' s'}
+const V={
+login(){return `<div class="card login"><h1>Painel da ADESA TV</h1><p class="mute">Acesso restrito ao administrador.</p>
+<div class="banner">Protótipo: qualquer e-mail e senha entram. Na versão real, o login será feito pelo Supabase Auth.</div>
+<label>E-mail<input id="em" type="email" value="admin@adesa.tv"></label><br><label>Senha<input id="pw" type="password" value="prototipo"></label><br>
+<button class="p" id="enter">Entrar</button></div>`},
+partidas(){const m=S.match;return `<h2>Partidas</h2><div class="card"><div class="row"><label>Nome da partida<input id="mn" value="Rodada 7 - Arena PlayPark"></label><label>Data<input id="md" type="date"></label><button class="p" id="mk">Criar partida e gerar código</button></div></div>
+${m?`<div class="card"><h3>${esc(m.name)}</h3><p class="mute">${esc(m.date||'sem data')}. Passe este código aos associados:</p><div class="code">${m.code}</div><p class="mute">Os associados entram em “Entrar como câmera” e digitam o código. Você autoriza cada celular na Sala de câmeras.</p></div>`:'<p class="mute">Nenhuma partida criada. Crie a primeira para gerar o código de conexão.</p>'}`},
+cameras(){if(!S.match)return '<p class="mute">Crie uma partida primeiro.</p>';
+return `<h2>Sala de câmeras</h2><div class="row" style="margin-bottom:12px"><button id="sim">Simular associado pedindo acesso</button><button id="wifi">Simular Wi-Fi fraco</button><span class="mute">Código da partida: <b>${S.match.code}</b></span></div>
+${S.cams.length?'<div class="grid">'+S.cams.map((c,i)=>`<div class="cam">${c.st==='ok'?court(i,true):'<div style="aspect-ratio:5/3;display:grid;place-items:center;background:var(--court);color:var(--chalk)">Aguardando autorização</div>'}<div class="b"><div class="row" style="justify-content:space-between"><b>${esc(c.n)}</b><span class="tag t-${c.st}">${{pend:'Pendente',ok:'Ao vivo',no:'Negada'}[c.st]}</span></div><span class="mute">${esc(c.pos)}${c.st==='ok'?', '+c.q+'p':''}</span>${c.st==='ok'?`<div class="bar"><span style="width:${c.q===1080?92:55}%"></span></div><span class="mute" style="font-size:13px">${c.q===1080?'Sinal bom':'Qualidade reduzida automaticamente'}</span>`:`<div class="row"><button class="ok" data-a="${i}">Autorizar</button><button class="no" data-d="${i}">Negar</button></div>`}</div></div>`).join('')+'</div>':'<p class="mute">Nenhuma câmera conectada ainda.</p>'}`},
+lances(){const a=approved();return `<h2>Editor de lances</h2>${a.length?'':'<div class="banner">Autorize ao menos uma câmera para marcar lances.</div>'}
+<div class="card"><div class="row"><label>Tipo<select id="lt"><option>Gol</option><option>Defesa</option><option>Falta</option><option>Momento engraçado</option></select></label><label>Jogador<input id="lj" placeholder="Nome do jogador"></label><label>Câmera<select id="lc">${a.map(c=>`<option>${esc(c.pos)}</option>`).join('')||'<option>-</option>'}</select></label><label>Início (s)<input id="l1" type="number" min="0" max="10" step=".5" value="5"></label><label>Fim (s)<input id="l2" type="number" min="0" max="10" step=".5" value="8"></label><button class="p" id="ls">Salvar lance</button></div></div>
+${S.plays.length?`<div class="card"><table><tr><th>Lance</th><th>Jogador</th><th>Câmera</th><th>Trecho</th><th></th></tr>${S.plays.map((p,i)=>`<tr><td>${esc(p.t)}</td><td>${esc(p.j||'-')}</td><td>${esc(p.c)}</td><td>${p.a} a ${p.b} s</td><td><button data-r="${i}">Revisar no VAR</button></td></tr>`).join('')}</table></div>`:'<p class="mute">Nenhum lance salvo ainda.</p>'}`},
+var(){const a=approved().slice(0,4);if(!a.length)return '<h2>VAR ADESA</h2><p class="mute">Autorize câmeras na Sala de câmeras para comparar ângulos aqui.</p>';
+return `<h2>VAR ADESA</h2><div class="grid">${a.map((c,i)=>`<div class="cam var">${court(i,true)}<div class="b"><b>${esc(c.pos)}</b></div></div>`).join('')}</div>
+<div class="card" style="margin-top:16px"><div class="row"><button class="p" id="pp">${S.run?'Pausar':'Reproduzir'}</button><label style="flex:0 0 150px">Velocidade<select id="sp"><option value="1">Normal</option><option value=".5">Câmera lenta 0,5x</option><option value=".25">Câmera lenta 0,25x</option></select></label><span class="mute">Tempo: <b id="tl">0.0 s</b></span></div><input class="scr" id="scr" type="range" min="0" max="10" step=".1" value="0" aria-label="Linha do tempo"></div>
+<div class="card"><h3>Registrar decisão</h3><div class="row"><label>Decisão<select id="dd"><option>Gol confirmado</option><option>Gol anulado</option><option>Falta confirmada</option><option>Lance mantido</option></select></label><label style="flex:2">Motivo<input id="dm" placeholder="Ex.: bola ultrapassou a linha nos dois ângulos do gol"></label><button class="p" id="ds">Registrar decisão</button></div>
+${S.log.length?'<table style="margin-top:10px">'+S.log.map(l=>`<tr><td>${l.h}</td><td><b>${esc(l.d)}</b></td><td>${esc(l.m||'sem motivo informado')}</td><td>${l.t.toFixed(1)} s</td></tr>`).join('')+'</table>':''}</div>`},
+camera(){const mine=S.cams.find(c=>c.me);return `<div class="card login"><h1>Entrar como câmera</h1><p class="mute">Para associados da ADESA. Você só transmite; o painel e o VAR são do administrador.</p>
+${mine?`<p>Pedido enviado: <span class="tag t-${mine.st}">${{pend:'aguardando o administrador',ok:'autorizado',no:'negado'}[mine.st]}</span></p><p class="mute">Posição: ${esc(mine.pos)}. Neste protótipo, volte ao login e autorize em Sala de câmeras.</p>`:`<label>Código da partida<input id="cc" placeholder="Ex.: AB12" maxlength="6"></label><br><label>Seu nome<input id="cn"></label><br><label>Posição da câmera<select id="cp">${POS.map(p=>`<option>${p}</option>`).join('')}</select></label><br><button class="p" id="cs">Pedir autorização</button><p class="mute" id="ce"></p><p class="mute" style="font-size:13px">Dica para testar: crie uma partida no painel e use o código dela.</p>`}</div>`}
+};
+function draw(){
+  const v=S.view;$('#app').innerHTML=V[v]();nav();wire(v);if(v==='var')moveBalls();document.title='ADESA TV 2.0'}
+function wire(v){
+  const on=(id,fn)=>{const e=$(id);if(e)e.onclick=fn};
+  on('#enter',()=>{S.logged=true;go('partidas')});
+  on('#mk',()=>{S.match={name:$('#mn').value||'Partida',date:$('#md').value,code:Math.random().toString(36).slice(2,6).toUpperCase()};S.cams=[];S.plays=[];S.log=[];draw()});
+  on('#sim',()=>{const i=S.cams.length;if(i>=4)return;S.cams.push({n:'Celular do '+NAMES[i],pos:POS[i],st:'pend',q:1080});draw()});
+  on('#wifi',()=>{const o=approved();if(o.length){o[o.length-1].q=720;draw()}});
+  document.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{S.cams[b.dataset.a].st='ok';draw()});
+  document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{S.cams[b.dataset.d].st='no';draw()});
+  on('#ls',()=>{const a=+$('#l1').value,b=+$('#l2').value;if(b<=a||!approved().length)return;S.plays.push({t:$('#lt').value,j:$('#lj').value,c:$('#lc').value,a,b});draw()});
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.t=S.plays[b.dataset.r].a;go('var')});
+  on('#pp',()=>{S.run=!S.run;$('#pp').textContent=S.run?'Pausar':'Reproduzir'});
+  const sp=$('#sp');if(sp){sp.value=S.spd;sp.onchange=()=>S.spd=+sp.value}
+  const sc=$('#scr');if(sc)sc.oninput=()=>{S.t=+sc.value;moveBalls()};
+  on('#ds',()=>{S.log.unshift({h:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),d:$('#dd').value,m:$('#dm').value,t:S.t});draw()});
+  on('#cs',()=>{const c=$('#cc').value.trim().toUpperCase(),n=$('#cn').value.trim();
+    if(!S.match||c!==S.match.code){$('#ce').textContent='Código não encontrado. Confira com o administrador.';return}
+    if(!n){$('#ce').textContent='Digite seu nome.';return}
+    S.cams.push({n:'Celular do '+n,pos:$('#cp').value,st:'pend',q:1080,me:true});draw()});
+}
+setInterval(()=>{if(S.view==='var'&&S.run){S.t+=0.05*S.spd;if(S.t>=10){S.t=10;S.run=false;const p=$('#pp');if(p)p.textContent='Reproduzir'}moveBalls()}},50);
+const h=location.hash.slice(1);if(h==='camera')S.view='camera';
+draw();
+</script>
+</body>
+</html>
